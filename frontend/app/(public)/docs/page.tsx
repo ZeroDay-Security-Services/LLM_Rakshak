@@ -4,8 +4,8 @@ const S = ({ id, title, children }: { id: string; title: string; children: React
 const Code = ({ children }: { children: React.ReactNode }) => <pre className="overflow-x-auto rounded-lg border bg-card p-3 font-mono text-xs text-foreground">{children}</pre>;
 export default function Docs() {
   const toc = [["quickstart", "Quick start"], ["authorization", "Authorisation & scope"], ["methodology", "Methodology"], ["scoring", "Scoring"], ["findings", "Findings workflow"], ["providers", "Providers & BYOK"], ["security", "Platform security"], ["api", "API"]];
-  return <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[200px_1fr]">
-    <nav aria-label="On this page" className="hidden md:block"><ul className="sticky top-20 space-y-2 text-sm">{toc.map(([h, l]) => <li key={h}><a href={`#${h}`} className="text-muted-foreground hover:text-foreground">{l}</a></li>)}</ul></nav>
+  return <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[180px_1fr]">
+    <nav aria-label="On this page" className="hidden md:block min-w-[180px]"><ul className="sticky top-20 flex flex-col gap-3 text-sm">{toc.map(([h, l]) => <li key={h}><a href={`#${h}`} className="block py-0.5 text-muted-foreground hover:text-foreground transition-colors">{l}</a></li>)}</ul></nav>
     <div className="space-y-12"><div><h1 className="text-3xl font-semibold tracking-tight">Documentation</h1><p className="mt-2 text-muted-foreground">How ZeroDay&apos;s LLM Rakshak assesses LLM applications.</p></div>
       <S id="quickstart" title="Quick start"><ol className="list-decimal space-y-1 pl-5"><li>Add a provider key under <b>Settings → API configuration</b> (encrypted at rest, never shown again).</li><li>Create a model under <b>Models</b> (provider, model name, optional endpoint and system prompt) and press <i>Test connection</i>.</li><li>Open <b>Assessments → New</b>, choose a preset or categories, set intensity and limits, confirm authorisation and start.</li><li>Watch live progress, then review findings, triage them and generate a report.</li></ol></S>
       <S id="authorization" title="Authorisation & scope"><p>You may only assess systems you own or are explicitly authorised to test. Each assessment stores your confirmation and statement, and custom endpoints require an additional ownership confirmation. All activity is audit-logged.</p><p>Tests are bounded: request budgets, token budgets, timeouts, concurrency limits and retry caps apply to every run. There is no unrestricted autonomous loop.</p></S>
@@ -23,5 +23,5 @@ POST /api/assessments/{id}/start  queue for execution
 GET  /api/assessments/{id}/progress
 GET  /api/vulnerabilities?severity=critical&sort=severity
 POST /api/assessments/{id}/reports   {"format":"pdf"}`}</Code></S>
-      <p className="text-xs">Questions? <Link href="/register" className="text-primary hover:underline">Create an account</Link> to get started.</p></div></main>;
+      <p className="text-xs">Questions? <a href="mailto:zerodaysecurityservices@gmail.com" className="text-primary hover:underline">Contact support</a> or <Link href="/register" className="text-primary hover:underline">create an account</Link> to get started.</p></div></main>;
 }

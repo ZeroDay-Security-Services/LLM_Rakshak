@@ -42,32 +42,18 @@ async def register(body: RegisterIn, request: Request):
     await _problems(body.password, email)
     pw_hash = security.hash_password(body.password)  # always hash: uniform timing whether or not the account exists
     if await db().users.find_one({"email": email}, {"_id": 1}):
-        await send_email(email, "ZeroDay's LLM Rakshak sign-up attempt", "Someone tried to register with this address, but an account already exists. If this was you, use 'Forgot password'.")
         return GENERIC
     org_name = body.organization or f"{body.name}'s workspace"
     t = now()
-    u = await db().users.insert_one({"email": email, "name": body.name, "password_hash": pw_hash, "role": "user", "is_active": True, "email_verified": False,
+    u = await db().users.insert_one({"email": email, "name": body.name, "password_hash": pw_hash, "role": "user", "is_active": True, "email_verified": True,
                                      "mfa_enabled": False, "failed_attempts": 0, "created_at": t, "organization": body.organization, "job_title": None,
                                      "preferences": {"theme": "dark", "timezone": "UTC"}})
     o = await db().organizations.insert_one({"name": org_name, "slug": _slug(org_name), "owner_id": u.inserted_id, "created_at": t})
     await db().organization_members.insert_one({"org_id": o.inserted_id, "user_id": u.inserted_id, "role": "owner", "created_at": t})
     await db().subscriptions.insert_one({"org_id": o.inserted_id, "plan": "free", "status": "active", "provider": None, "created_at": t})
     await db().users.update_one({"_id": u.inserted_id}, {"$set": {"active_org_id": o.inserted_id}})
-    raw, h = security.new_token()
-    await db().email_verifications.insert_one({"user_id": u.inserted_id, "token_hash": h, "expires_at": t + timedelta(hours=24)})
-    await send_email(email, "Verify your ZeroDay's LLM Rakshak email", f"Open this link to verify your email (valid 24h):\n{get_settings().frontend_origin}/verify-email?token={raw}")
     await audit("auth.register", actor_id=u.inserted_id, actor_email=email, ip=client_ip(request))
     return GENERIC
-
-
-@router.post("/verify-email", dependencies=[limit("verify", 20, 3600)])
-async def verify_email(body: TokenIn):
-    v = await db().email_verifications.find_one_and_delete({"token_hash": security.sha256(body.token), "expires_at": {"$gt": now()}})
-    if not v:
-        raise HTTPException(400, "Invalid or expired token")
-    await db().users.update_one({"_id": v["user_id"]}, {"$set": {"email_verified": True}})
-    await audit("auth.email_verified", actor_id=v["user_id"])
-    return {"message": "Email verified"}
 
 
 @router.post("/resend-verification", status_code=202, dependencies=[limit("resend", 5, 3600)])
@@ -107,8 +93,6 @@ async def login(body: LoginIn, request: Request, response: Response):
             await _history(u["_id"], email, request, False, "bad_credentials" if not locked else "locked")
         await audit("auth.login_failed", actor_email=email, ip=client_ip(request))
         raise HTTPException(401, "Invalid credentials")
-    if not u.get("email_verified"):
-        raise HTTPException(403, "Email address not verified")
     if not u.get("is_active"):
         raise HTTPException(403, "Account is deactivated")
     step = None

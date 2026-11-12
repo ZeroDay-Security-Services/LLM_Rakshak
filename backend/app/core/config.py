@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str | None = None
     smtp_password: str | None = None
-    smtp_from: str = "ZeroDay Security Services <no-reply@zeroday.local>"
+    smtp_from: str = "ZeroDay Security Services <zerodaysecurityservices@gmail.com>"
     # Platform-managed secret used for the Claude analysis layer (optional). Users may use their own BYOK key instead.
     analysis_api_key: str | None = None
     analysis_model: str = "claude-sonnet-5-5"
